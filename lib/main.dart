@@ -1,115 +1,52 @@
 import 'package:flutter/material.dart';
-import 'dart:convert';
-import 'package:http/http.dart' as http;
+import 'screens/post_api.dart';
+import 'screens/weather_api.dart';
+import 'screens/poke_api.dart';
+import 'screens/account.dart';
+import 'widgets/custom_bottom_nav.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Udemy outputs',
-      theme: ThemeData(
-
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
-      ),
-      home: const MyHomePage(title: 'API Collection'),
+      title: 'Bottom Navigation Example',
+      home: Main(),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  final String title;
-
+class Main extends StatefulWidget {
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  _Main createState() => _Main();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  int _selectedIndex = 0;
-  TextEditingController controller=TextEditingController();
-  List<String> items=[];
-  String errorMessage="";
+class _Main extends State<Main> {
+  int _currentIndex = 0;
+  final List<Widget> _pages = [
+    PostAPI(),
+    WeatherAPI(),
+    PokeAPI(),
+    Account(),
+  ];
 
-  void _onItemTapped(int index) {
+  void _onTabSelected(int index) {
     setState(() {
-      _selectedIndex = index;
+      _currentIndex = index;
     });
-  }
-
-  Future<void> loadZipCode(String zipCode) async{
-    setState(() {
-      errorMessage='APIレスポンス待ち';
-    });
-    
-    final response=await http.get(Uri.parse('https://zipcloud.ibsnet.co.jp/api/search?zipcode=$zipCode'));
-
-    if (response.statusCode != 200) {
-      return;
-    }
-    final body=json.decode(response.body) as Map<String, dynamic>;
-    final results=(body['results'] ?? [])as List<dynamic>;
-
-    if (results.isEmpty) {
-      setState(() {
-        errorMessage = 'そのような郵便番号はありません';
-      });
-    } else {
-      setState(() {
-        errorMessage = '';
-        items = results.map((result) =>
-        "${result['address1']}${result['address2']}${result['address3']}")
-            .toList(growable: false);
-      });
-    }
-
   }
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
-      appBar: AppBar(
-        title: TextField(
-          controller: controller,
-          keyboardType: TextInputType.number,
-          onChanged: (value){
-            if(value.isNotEmpty){
-              loadZipCode(value);
-            }
-          },
-        ),
+      body: _pages[_currentIndex],
+      bottomNavigationBar: CustomBottomNavBar(
+        selectedIndex: _currentIndex,
+        onItemTapped: _onTabSelected,
       ),
-      body: ListView.builder(
-          itemBuilder: (context, index) {
-            if (errorMessage.isNotEmpty) {
-              return ListTile(title: Text(errorMessage));
-            } else {
-              return ListTile(title: Text(items[index]));
-            }
-          },
-        itemCount: items.length,
-      ),
-
-      bottomNavigationBar: BottomNavigationBar(
-      currentIndex: _selectedIndex,
-      onTap: _onItemTapped,
-      items: const <BottomNavigationBarItem>[
-        BottomNavigationBarItem(icon: Icon(Icons.post_add_outlined), label: '郵便番号'),
-        BottomNavigationBarItem(icon: Icon(Icons.sunny), label: '天気'),
-        BottomNavigationBarItem(
-            icon: Icon(Icons.circle), label: 'ポケモン'),
-        BottomNavigationBarItem(icon: Icon(Icons.person), label: 'アカウント'),
-      ],
-      type: BottomNavigationBarType.fixed,
-    ));
+    );
   }
 }
