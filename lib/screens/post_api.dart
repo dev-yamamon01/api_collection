@@ -13,13 +13,13 @@ class PostAPI extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Udemy outputs',
+      title: 'API Collection',
       theme: ThemeData(
 
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: const MyHomePage(title: 'API Collection'),
+      home: const MyHomePage(title: '郵便番号API'),
     );
   }
 }
@@ -75,30 +75,36 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
-        appBar: AppBar(
-          title: TextField(
-            controller: controller,
-            keyboardType: TextInputType.number,
-            onChanged: (value){
-              if(value.isNotEmpty){
-                loadZipCode(value);
-              }
-            },
+      appBar: AppBar(title: Text(widget.title)),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: TextField(
+              controller: controller,
+              keyboardType: TextInputType.number,
+              onChanged: (value) {
+                if (value.isNotEmpty) {
+                  loadZipCode(value);
+                }
+              },
+            ),
           ),
-        ),
-        body: ListView.builder(
-          itemBuilder: (context, index) {
-            if (errorMessage.isNotEmpty) {
-              return ListTile(title: Text(errorMessage));
-            } else {
-              return ListTile(title: Text(items[index]));
-            }
-          },
-          itemCount: items.length,
-        ),
-
-        );
+          Expanded(
+            child: errorMessage.isNotEmpty
+                ? Center(
+                    child: Text(errorMessage),
+                  )
+                : ListView.builder(
+                    itemBuilder: (context, index) {
+                      return ListTile(title: Text(items[index]));
+                    },
+                    itemCount: items.length,
+                  ),
+          )
+        ],
+      ),
+    );
   }
 }
