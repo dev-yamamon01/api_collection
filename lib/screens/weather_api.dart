@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-
-//String state="https://api.openweathermap.org/data/2.5/weather?q=tokyo&units=metric&lang=ja&appid=daa2ce4d8e74ca54914d85a3b63f74ca";
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
 void main() {
   runApp(const WeatherAPI());
@@ -34,6 +34,8 @@ class WeatherPage extends StatefulWidget {
 class _WeatherPageState extends State<WeatherPage> {
 
   TextEditingController controller=TextEditingController();
+  String message="";
+  String city_name="";
 
   @override
   Widget build(BuildContext context) {
@@ -43,24 +45,59 @@ class _WeatherPageState extends State<WeatherPage> {
       ),
       body: Center(
         child: Column(children: [
-
           Padding(
             padding: const EdgeInsets.all(8.0),
-            child:
-              TextField(
-                controller: controller,
-                keyboardType: TextInputType.number,
-                onChanged: (city) {
-                  if (city.isNotEmpty) {
-                    //loadweather(city);
-                  }
-                },
-              ),
+            child: TextField(
+              controller: controller,
+              keyboardType: TextInputType.text,
+              onChanged: (city) {
+                if (city.isNotEmpty) {
+                  //ここで天気APIを呼ぶ
+                  loadweather(city);
+                } else {
+                  //テキストフィールドが空の時の処理
+                  setState(() {
+                    message = "";
+                  });
+                }
+              },
+            ),
           ),
-
+          Expanded(
+              child: message.isNotEmpty
+                  ? Center(
+                      child: Text(message),
+                    )
+                  : ListView(
+                      children: [
+                        ListTile(
+                          title: Text("都市名"),
+                          subtitle: Text(city_name),
+                        ),
+                      ],
+                    ))
         ]),
       ),
     );
   }
+
+  Future<void>loadweather(String city)async {
+    setState(() {
+      message="APIレスポンス待ち";
+    });
+
+    final response=await http.get(Uri.parse('https://api.openweathermap.org/data/2.5/weather?q=$city&units=metric&lang=ja&appid=daa2ce4d8e74ca54914d85a3b63f74ca'));
+
+    if (response.statusCode != 200) {
+      return;
+    }
+    final body=json.decode(response.body) as Map<String, dynamic>;
+
+    setState(() {
+      message="";
+      city_name=(body['name'] ?? []);
+    });
+  }
+
 }
 
