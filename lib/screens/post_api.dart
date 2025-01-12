@@ -82,6 +82,9 @@ class _MyHomePageState extends State<MyHomePage> {
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: TextField(
+              decoration: InputDecoration(
+                hintText: 'ここに郵便番号を入力',
+              ),
               controller: controller,
               keyboardType: TextInputType.number,
               onChanged: (value) {

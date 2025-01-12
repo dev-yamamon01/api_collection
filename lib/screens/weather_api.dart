@@ -36,6 +36,9 @@ class _WeatherPageState extends State<WeatherPage> {
   TextEditingController controller=TextEditingController();
   String message="";
   String city_name="";
+  String weather="";
+  double max_temp=0,min_temp=0,temp=0;
+  int humidity=0;
 
   @override
   Widget build(BuildContext context) {
@@ -48,6 +51,11 @@ class _WeatherPageState extends State<WeatherPage> {
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: TextField(
+              decoration: InputDecoration(
+                hintText: '例：tokyo',
+                labelText: '都市名', // ラベルとして表示するテキスト
+                border: OutlineInputBorder(), // 枠線を追加
+              ),
               controller: controller,
               keyboardType: TextInputType.text,
               onChanged: (city) {
@@ -74,6 +82,18 @@ class _WeatherPageState extends State<WeatherPage> {
                           title: Text("都市名"),
                           subtitle: Text(city_name),
                         ),
+                        ListTile(
+                          title: Text("天気"),
+                          subtitle: Text(weather),
+                        ),
+                        ListTile(
+                          title: Text("気温"),
+                          subtitle: Text(temp.toString()+"℃　(↑："+max_temp.toString()+"　↓："+min_temp.toString()+")"),
+                        ),
+                        ListTile(
+                          title: Text("湿度"),
+                          subtitle: Text(humidity.toString()+"%"),
+                        ),
                       ],
                     ))
         ]),
@@ -83,21 +103,35 @@ class _WeatherPageState extends State<WeatherPage> {
 
   Future<void>loadweather(String city)async {
     setState(() {
-      message="APIレスポンス待ち";
+      message = "APIレスポンス待ち";
     });
 
-    final response=await http.get(Uri.parse('https://api.openweathermap.org/data/2.5/weather?q=$city&units=metric&lang=ja&appid=daa2ce4d8e74ca54914d85a3b63f74ca'));
+    final response = await http.get(Uri.parse(
+        'https://api.openweathermap.org/data/2.5/weather?q=$city&units=metric&lang=ja&appid=daa2ce4d8e74ca54914d85a3b63f74ca'));
+    final body = json.decode(response.body) as Map<String, dynamic>;
 
-    if (response.statusCode != 200) {
+    if (response.statusCode != 200 && body.isEmpty) {
       return;
     }
-    final body=json.decode(response.body) as Map<String, dynamic>;
 
-    setState(() {
-      message="";
-      city_name=(body['name'] ?? []);
-    });
+    if (body['message'] == "city not found") {
+      setState(() {
+        message = "そのような都市は見つかりません";
+      });
+    } else {
+      setState(() {
+        message = "";
+        //「?」はnullの時は例外にせずそのまま終了、「??」はnullの時に右側の値を代わりに使用
+        // 「as String」はdynamicを明示的にStringにキャストしている
+        city_name = (body['name'] ?? []);
+        weather=(body['weather']?[0]?['description'] ?? '') as String;
+        final main=body['main'] as Map<String,dynamic>;
+        temp=main['temp'] ?? '';
+        max_temp=main['temp_max'] ?? '';
+        min_temp=main['temp_min'] ?? '';
+        humidity=main['humidity'] ?? '';
+      });
+    }
   }
-
 }
 
